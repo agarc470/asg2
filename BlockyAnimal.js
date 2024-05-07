@@ -36,6 +36,7 @@ function setupWebGL() {
   }
 
   gl.enable(gl.DEPTH_TEST);
+  g_globalRotateMatrix.setIdentity();
 }
 function connectVariablesToGLSL() {
   // Initialize shaders
@@ -97,10 +98,10 @@ let g_globalAngleX = 0;
 let g_globalAngleY = 0;
 let g_yellowAngle = 0;
 let g_magentaAngle = 0;
-let g_tail1Animation = false; 
-let g_tail2Animation = false; 
-let g_tail3Animation = false; 
-let g_tail4Animation = false; 
+let g_tail1Animation = false;
+let g_tail2Animation = false;
+let g_tail3Animation = false;
+let g_tail4Animation = false;
 let g_frontLeg1Animation = false;
 let g_frontLeg2Animation = false;
 let g_backLeg1Animation = false;
@@ -120,6 +121,16 @@ let g_backLeg1 = 0;
 let g_backKnee1 = 0;
 let g_backLeg2 = 0;
 let g_backKnee2 = 0;
+let pokeAnimationActive = false;
+let pokeAnimationStartTime = 0;
+let g_globalRotateMatrix = new Matrix4();
+function startPokeAnimation() {
+  if (!pokeAnimationActive) {
+    pokeAnimationActive = true;
+    pokeAnimationStartTime = g_seconds; // Capture the start time of the animation
+    requestAnimationFrame(tick); // Ensure the animation loop is running
+  }
+}
 function addActionsForHtmlUI() {
   // Button events (Shape type)
   document.getElementById('pointButton').onclick = function () { g_selectedType = POINT };
@@ -148,52 +159,52 @@ function addActionsForHtmlUI() {
     g_backLeg12nimation = true;
   };
   document.getElementById('tail1').addEventListener('mousemove', function () {
-    g_tail1 = this.value; 
+    g_tail1 = this.value;
     renderScene();
   });
   document.getElementById('tail2').addEventListener('mousemove', function () {
-    g_tail2 = this.value; 
+    g_tail2 = this.value;
     renderScene();
   });
   document.getElementById('tail3').addEventListener('mousemove', function () {
-    g_tail3 = this.value; 
+    g_tail3 = this.value;
     renderScene();
   });
-  
+
   document.getElementById('tail4').addEventListener('mousemove', function () {
-    g_tail4 = this.value; 
+    g_tail4 = this.value;
     renderScene();
   });
   document.getElementById('frontLeg1').addEventListener('mousemove', function () {
-    g_frontLeg1 = this.value; 
+    g_frontLeg1 = this.value;
     renderScene();
   });
   document.getElementById('frontKnee1').addEventListener('mousemove', function () {
-    g_frontKnee1 = this.value; 
+    g_frontKnee1 = this.value;
     renderScene();
   });
   document.getElementById('frontLeg2').addEventListener('mousemove', function () {
-    g_frontLeg2 = this.value; 
+    g_frontLeg2 = this.value;
     renderScene();
   });
   document.getElementById('frontKnee2').addEventListener('mousemove', function () {
-    g_frontKnee2 = this.value; 
+    g_frontKnee2 = this.value;
     renderScene();
   });
   document.getElementById('backLeg1').addEventListener('mousemove', function () {
-    g_backLeg1 = this.value; 
+    g_backLeg1 = this.value;
     renderScene();
   });
   document.getElementById('backKnee1').addEventListener('mousemove', function () {
-    g_backKnee1 = this.value; 
+    g_backKnee1 = this.value;
     renderScene();
   });
   document.getElementById('backLeg2').addEventListener('mousemove', function () {
-    g_backLeg2 = this.value; 
+    g_backLeg2 = this.value;
     renderScene();
   });
   document.getElementById('backKnee2').addEventListener('mousemove', function () {
-    g_backKnee2 = this.value; 
+    g_backKnee2 = this.value;
     renderScene();
   });
   document.getElementById('angleSlideX').addEventListener('input', function () {
@@ -204,7 +215,7 @@ function addActionsForHtmlUI() {
     g_globalAngleY = this.value;
     renderScene();
   });
-  
+
 }
 
 function main() {
@@ -216,18 +227,24 @@ function main() {
   // Set up actions for the HTML UI elements
   addActionsForHtmlUI();
 
-  canvas.onmousedown = function(ev) {
+  canvas.onmousedown = function (ev) {
     const [x, y] = convertCoordinatesEventToGL(ev);
-    isDragging = true;
-    lastMouseX = x;
-    lastMouseY = y;
+    if (ev.shiftKey) {
+      startPokeAnimation();
+    } else {
+      isDragging = true;
+      lastMouseX = x;
+      lastMouseY = y;
+    }
   };
 
-  canvas.onmouseup = function(ev) {
-    isDragging = false;
+  canvas.onmouseup = function (ev) {
+    if (isDragging) {
+      isDragging = false;
+    }
   };
 
-  canvas.onmousemove = function(ev) {
+  canvas.onmousemove = function (ev) {
     if (isDragging) {
       const [newX, newY] = convertCoordinatesEventToGL(ev);
       let deltaX = newX - lastMouseX;
@@ -246,30 +263,44 @@ function main() {
   //gl.clear(gl.COLOR_BUFFER_BIT);
   requestAnimationFrame(tick);
 }
-var g_startTime = performance.now()/1000.0;
-var g_seconds = performance.now()/1000.0-g_startTime;
+var g_startTime = performance.now() / 1000.0;
+var g_seconds = performance.now() / 1000.0 - g_startTime;
 
 function tick() {
-  g_seconds=performance.now()/1000.0-g_startTime;
+  g_seconds = performance.now() / 1000.0 - g_startTime;
   //console.log(g_seconds);
-
+  if (pokeAnimationActive) {
+    updatePokeAnimation();
+  }
   renderScene();
 
   requestAnimationFrame(tick);
 
 }
 
+function updatePokeAnimation() {
+  const duration = 1.0; // Length of the animation in seconds
+  let timeElapsed = g_seconds - pokeAnimationStartTime;
+
+  if (timeElapsed < duration) {
+    let angle = 360 * (1 - Math.cos(Math.PI * timeElapsed / duration)); // Oscillating startle effect
+    g_globalRotateMatrix.setRotate(angle, 1, 0, 1);  // Update the rotation matrix
+  } else {
+    pokeAnimationActive = false;
+    g_globalRotateMatrix.setIdentity(); // Reset rotation back to identity
+  }
+}
 
 
 function click(ev) {
 
   let [x, y] = convertCoordinatesEventToGL(ev);
 
-  let newAngleX = (x + 1) / 2 * 360; 
+  let newAngleX = (x + 1) / 2 * 360;
   g_globalAngleX = newAngleX;
-  document.getElementById('angleSlideX').value = newAngleX; 
+  document.getElementById('angleSlideX').value = newAngleX;
 
-  let newAngleY = (y + 1) / 2 * 360; 
+  let newAngleY = (y + 1) / 2 * 360;
   g_globalAngleY = newAngleY;
   document.getElementById('angleSlideY').value = newAngleY;
 
@@ -295,10 +326,15 @@ function renderScene() {
   // pass matrix to u_ModelMatrix attribute
   var globalRotMatX = new Matrix4().rotate(g_globalAngleX, 0, 1, 0); // Rotating around y-axis
   var globalRotMatY = new Matrix4().rotate(g_globalAngleY, 1, 0, 0); // Rotating around x-axis
-
   var combinedRotationMatrix = globalRotMatX.multiply(globalRotMatY); // You can reverse the order depending on desired effect
 
-  gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, combinedRotationMatrix.elements);
+  if (pokeAnimationActive) {
+    // During poke animation, use the animation matrix
+    gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, g_globalRotateMatrix.elements);
+  } else {
+    // When not animating, use the matrix from sliders
+    gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, combinedRotationMatrix.elements);
+  }
 
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -306,7 +342,7 @@ function renderScene() {
 
   //draw body cube
   var body = new Cube();
-  body.color = [.4,.4,.4,1.0];
+  body.color = [.4, .4, .4, 1.0];
   body.matrix.translate(-.2, 0, -.1);
   //body.matrix.rotate(-5, 1, 0, 0);
   body.matrix.scale(.4, .4, .75);
@@ -314,26 +350,24 @@ function renderScene() {
 
   //draw additional body cube
   var mane = new Cube();
-  mane.color = [.3,.3,.3,1.0];
+  mane.color = [.3, .3, .3, 1.0];
   mane.matrix.translate(-.25, -.02, -.45);
   //body.matrix.rotate(-5, 1, 0, 0);
   mane.matrix.scale(0.5, .5, .35);
   mane.render();
 
   var face = new Cube();
-  face.color = [.4,.4,.4,1.0];
+  face.color = [.4, .4, .4, 1.0];
   face.matrix.translate(-.2, 0, -.6);
   //body.matrix.rotate(-5, 1, 0, 0);
   face.matrix.scale(.4, .4, .15);
   face.render();
 
- 
-
   var tail1 = new Cylinder();
-  tail1.color = [.3,.3,.3,1.0];
+  tail1.color = [.3, .3, .3, 1.0];
   tail1.matrix.translate(0, .23, .6);
-  if(g_tail1Animation){
-    tail1.matrix.rotate(25*Math.sin(g_seconds), 0, 1, 0);
+  if (g_tail1Animation) {
+    tail1.matrix.rotate(25 * Math.sin(g_seconds), 0, 1, 0);
   } else {
     tail1.matrix.rotate(g_tail1, 0, 1, 0);
   }
@@ -343,11 +377,11 @@ function renderScene() {
   tail1.render();
 
   var tail2 = new Cylinder();
-  tail2.color = [.4,.4,.4,1.0];
+  tail2.color = [.4, .4, .4, 1.0];
   tail2.matrix = tail1Coordinates;
   tail2.matrix.translate(0, 0, .15);
-  if(g_tail2Animation){
-    tail2.matrix.rotate(25*Math.sin(g_seconds), 0, 1, 0);
+  if (g_tail2Animation) {
+    tail2.matrix.rotate(25 * Math.sin(g_seconds), 0, 1, 0);
   } else {
     tail2.matrix.rotate(g_tail2, 0, 1, 0);
   }
@@ -356,11 +390,11 @@ function renderScene() {
   tail2.render();
 
   var tail3 = new Cylinder();
-  tail3.color = [.3,.3,.3,1.0];
+  tail3.color = [.3, .3, .3, 1.0];
   tail3.matrix = tail2Coordinates;
   tail3.matrix.translate(0, 0, .15);
-  if(g_tail3Animation){
-    tail3.matrix.rotate(25*Math.sin(g_seconds), 0, 1, 0);
+  if (g_tail3Animation) {
+    tail3.matrix.rotate(25 * Math.sin(g_seconds), 0, 1, 0);
   } else {
     tail3.matrix.rotate(g_tail3, 0, 1, 0);
   }
@@ -369,11 +403,11 @@ function renderScene() {
   tail3.render();
 
   var tail4 = new Cylinder();
-  tail4.color = [.4,.4,.4,1.0];
+  tail4.color = [.4, .4, .4, 1.0];
   tail4.matrix = tail3Coordinates;
   tail4.matrix.translate(0, 0, .15);
-  if(g_tail4Animation){
-    tail4.matrix.rotate(25*Math.sin(g_seconds), 0, 1, 0);
+  if (g_tail4Animation) {
+    tail4.matrix.rotate(25 * Math.sin(g_seconds), 0, 1, 0);
   } else {
     tail4.matrix.rotate(g_tail4, 0, 1, 0);
   }
@@ -381,21 +415,21 @@ function renderScene() {
   tail4.render();
 
   var nose = new Cube();
-  nose.color = [.3,.3,.3,1.0];
+  nose.color = [.3, .3, .3, 1.0];
   nose.matrix.translate(-.1, 0, -.75);
   //body.matrix.rotate(-5, 1, 0, 0);
   nose.matrix.scale(.2, .2, .15);
   nose.render();
 
   var ear1 = new Cube();
-  ear1.color = [.2,.2,.2,1.0];
+  ear1.color = [.2, .2, .2, 1.0];
   ear1.matrix.translate(-.2, .4, -.5);
   //body.matrix.rotate(-5, 1, 0, 0);
   ear1.matrix.scale(.125, .125, .05);
   ear1.render();
 
   var ear2 = new Cube();
-  ear2.color = [.2,.2,.2,1.0];
+  ear2.color = [.2, .2, .2, 1.0];
   ear2.matrix.translate(.075, .4, -.5);
   //body.matrix.rotate(-5, 1, 0, 0);
   ear2.matrix.scale(.125, .125, .05);
@@ -403,11 +437,11 @@ function renderScene() {
 
   //draw legs
   var frontLeg1 = new Cylinder();
-  frontLeg1.color = [.4,.4,.4,1.0];
+  frontLeg1.color = [.4, .4, .4, 1.0];
   frontLeg1.matrix.translate(-.14, -.02, -.35);
   frontLeg1.matrix.rotate(90, 1, 0, 0);
-  if(g_frontLeg1Animation){
-    frontLeg1.matrix.rotate(25*Math.sin(g_seconds), 1, 0, 0);
+  if (g_frontLeg1Animation) {
+    frontLeg1.matrix.rotate(25 * Math.sin(g_seconds), 1, 0, 0);
   } else {
     frontLeg1.matrix.rotate(g_frontLeg1, 0, 1, 0);
   }
@@ -416,7 +450,7 @@ function renderScene() {
   frontLeg1.render();
 
   var frontKnee1 = new Cylinder();
-  frontKnee1.color = [.3,.3,.3,1.0];
+  frontKnee1.color = [.3, .3, .3, 1.0];
   frontKnee1.matrix = frontLeg1Coordinates;
   frontKnee1.matrix.translate(0, 0, .25);
   //frontKnee1.matrix.rotate(g_frontKnee1, 1, 0, 0);
@@ -425,11 +459,11 @@ function renderScene() {
   frontKnee1.render();
 
   var backLeg1 = new Cylinder();
-  backLeg1.color = [.4,.4,.4,1.0];
+  backLeg1.color = [.4, .4, .4, 1.0];
   backLeg1.matrix.translate(-.14, 0, .59);
   backLeg1.matrix.rotate(90, 1, 0, 0);
-  if(g_backLeg1Animation){
-    backLeg1.matrix.rotate(-25*Math.sin(g_seconds), 1, 0, 0);
+  if (g_backLeg1Animation) {
+    backLeg1.matrix.rotate(-25 * Math.sin(g_seconds), 1, 0, 0);
   } else {
     backLeg1.matrix.rotate(g_backLeg1, 0, 1, 0);
   }
@@ -438,7 +472,7 @@ function renderScene() {
   backLeg1.render();
 
   var backKnee1 = new Cylinder();
-  backKnee1.color = [.3,.3,.3,1.0];
+  backKnee1.color = [.3, .3, .3, 1.0];
   backKnee1.matrix = backLeg1Coordinates;
   backKnee1.matrix.translate(0, 0, .27);
   backKnee1.matrix.rotate(g_backKnee1, 1, 0, 0);
@@ -447,20 +481,20 @@ function renderScene() {
   backKnee1.render();
 
   var frontLeg2 = new Cylinder();
-  frontLeg2.color = [.4,.4,.4,1.0];
+  frontLeg2.color = [.4, .4, .4, 1.0];
   frontLeg2.matrix.translate(.14, -.02, -.35);
   frontLeg2.matrix.rotate(90, 1, 0, 0);
-  if(g_frontLeg2Animation){
-    frontLeg2.matrix.rotate(-25*Math.sin(g_seconds), 1, 0, 0);
+  if (g_frontLeg2Animation) {
+    frontLeg2.matrix.rotate(-25 * Math.sin(g_seconds), 1, 0, 0);
   } else {
     frontLeg2.matrix.rotate(g_frontLeg2, 0, 1, 0);
   }
   var frontLeg2Coordinates = new Matrix4(frontLeg2.matrix);
   frontLeg2.matrix.scale(2.5, 2.5, .25);
   frontLeg2.render();
-  
+
   var frontKnee2 = new Cylinder();
-  frontKnee2.color = [.3,.3,.3,1.0];
+  frontKnee2.color = [.3, .3, .3, 1.0];
   frontKnee2.matrix = frontLeg2Coordinates;
   frontKnee2.matrix.translate(0, 0, .25);
   frontKnee2.matrix.rotate(g_frontKnee2, 1, 0, 0);
@@ -469,11 +503,11 @@ function renderScene() {
   frontKnee2.render();
 
   var backLeg2 = new Cylinder();
-  backLeg2.color = [.4,.4,.4,1.0];
+  backLeg2.color = [.4, .4, .4, 1.0];
   backLeg2.matrix.translate(.14, 0, .59);
   backLeg2.matrix.rotate(90, 1, 0, 0);
-  if(g_backLeg1Animation){
-    backLeg2.matrix.rotate(25*Math.sin(g_seconds), 1, 0, 0);
+  if (g_backLeg1Animation) {
+    backLeg2.matrix.rotate(25 * Math.sin(g_seconds), 1, 0, 0);
   } else {
     backLeg2.matrix.rotate(g_backLeg2, 0, 1, 0);
   }
@@ -482,7 +516,7 @@ function renderScene() {
   backLeg2.render();
 
   var backKnee2 = new Cylinder();
-  backKnee2.color = [.3,.3,.3,1.0];
+  backKnee2.color = [.3, .3, .3, 1.0];
   backKnee2.matrix = backLeg2Coordinates;
   backKnee2.matrix.translate(0, 0, .27);
   backKnee2.matrix.rotate(g_backKnee2, 1, 0, 0);
@@ -492,7 +526,7 @@ function renderScene() {
   backKnee2.render();
 
   var paw1 = new Cube();
-  paw1.color = [.2,.2,.2,1.0];
+  paw1.color = [.2, .2, .2, 1.0];
   paw1.matrix = frontKnee1Coordinates;
   paw1.matrix.translate(-.075, .07, .35);
   paw1.matrix.rotate(180, 1, 0, 0);
@@ -500,7 +534,7 @@ function renderScene() {
   paw1.render();
 
   var paw2 = new Cube();
-  paw2.color = [.2,.2,.2,1.0];
+  paw2.color = [.2, .2, .2, 1.0];
   paw2.matrix = backKnee1Coordinates;
   paw2.matrix.translate(-.075, .07, .35);
   paw2.matrix.rotate(180, 1, 0, 0);
@@ -508,7 +542,7 @@ function renderScene() {
   paw2.render();
 
   var paw3 = new Cube();
-  paw3.color = [.2,.2,.2,1.0];
+  paw3.color = [.2, .2, .2, 1.0];
   paw3.matrix = frontKnee2Coordinates;
   paw3.matrix.translate(-.075, .07, .35);
   paw3.matrix.rotate(180, 1, 0, 0);
@@ -516,7 +550,7 @@ function renderScene() {
   paw3.render();
 
   var paw4 = new Cube();
-  paw4.color = [.2,.2,.2,1.0];
+  paw4.color = [.2, .2, .2, 1.0];
   paw4.matrix = backKnee2Coordinates;
   paw4.matrix.translate(-.075, .07, .35);
   paw4.matrix.rotate(180, 1, 0, 0);
