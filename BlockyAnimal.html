@@ -6,19 +6,13 @@
   </head>
 
   <body onload="main()">
-    <h1>Awesomeness!</h1>
-    <p>Implemented rainbow mode that allows user to draw on canvas using rainbow brush</p>
+    <p>
     <canvas id="webgl" width="400" height="400">
     Please use a browser that supports "canvas"
     </canvas>
     <p>
 
     <p id="numdot"> XXX </p>
-
-    <button type="button" id="green">Green</button>
-    <button type="button" id="red">Red</button>
-    <button type="button" id="rainbow">Rainbow Mode</button>
-    <button type="button" id="clearButton">Clear</button>
     <p>
     
     <button type="button" id="pointButton">Point</button>
@@ -27,21 +21,28 @@
     <button type="button" id="recreateButton">Recreate Drawing</button>
 
     <p>
-    Red <input type="range" min="0" max="100" value="100" class="slider" id="redSlide">
+    frontLeg1 <input type="range" min="-45" max="45" value="0" class="slider" id="frontLeg1">
+    frontKnee1 <input type="range" min="-45" max="45" value="0" class="slider" id="frontKnee1">
+    backLeg1 <input type="range" min="-45" max="45" value="0" class="slider" id="backLeg1">
+    backKnee1 <input type="range" min="-45" max="45" value="0" class="slider" id="backKnee1">
     <p>
-    Green <input type="range" min="0" max="100" value="100" class="slider" id="greenSlide">
+    frontLeg2 <input type="range" min="-45" max="45" value="0" class="slider" id="frontLeg2">
+    frontKnee2 <input type="range" min="-45" max="45" value="0" class="slider" id="frontKnee2">
+    backLeg2 <input type="range" min="-45" max="45" value="0" class="slider" id="backLeg2">
+    backKnee2 <input type="range" min="-45" max="45" value="0" class="slider" id="backKnee2">
     <p>
-    Blue <input type="range" min="0" max="100" value="100" class="slider" id="blueSlide">
-    <p>
-    Yellow <input type="range" min="-45" max="45" value="0" class="slider" id="yellowSlide">
-    <p>
-    Magenta <input type="range" min="-45" max="45" value="0" class="slider" id="magentaSlide">
+    tail1 <input type="range" min="-45" max="45" value="0" class="slider" id="tail1">
+    tail2 <input type="range" min="-45" max="45" value="0" class="slider" id="tail2">
+    tail3 <input type="range" min="-45" max="45" value="0" class="slider" id="tail3">
+    tail4 <input type="range" min="-45" max="45" value="0" class="slider" id="tail4">
     <p>
     Animation: 
     <button type="button" id="animationYellowOnButton">ON</button>
     <button type="button" id="animationYellowOffButton">OFF</button>
     <p>
-    Camera Angle <input type="range" min="0" max="90" value="5" class="slider" id="angleSlide">
+    Camera Angle X <input type="range" min="0" max="360" value="5" class="slider" id="angleSlideX">
+    <p>
+    Camera Angle Y <input type="range" min="0" max="360" value="5" class="slider" id="angleSlideY">
     <p>
 
     <script src="lib/webgl-utils.js"></script>
@@ -49,7 +50,6 @@
     <script src="lib/cuon-matrix-cse160.js"></script>
     <script src="Triangle.js"></script>
     <script src="Cube.js"></script>
-    <script src="Sphere.js"></script>
     <script src="Cylinder.js"></script>
     <script src="BlockyAnimal.js"></script>
   </body>
